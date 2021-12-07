@@ -45,6 +45,11 @@ const FKey FJoyConKey::JoyCon_Right_ThumbStick_Y("JoyCon_Right_ThumbStick_Y");
 const FKey FJoyConKey::JoyCon_Zr("JoyCon_Zr");
 const FKey FJoyConKey::JoyCon_R("JoyCon_R");
 
+// Setup gyroscope
+const FKey FJoyConKey::JoyCon_Gyroscope_X("JoyCon_Gyroscope_X");
+const FKey FJoyConKey::JoyCon_Gyroscope_Y("JoyCon_Gyroscope_Y");
+const FKey FJoyConKey::JoyCon_Gyroscope_Z("JoyCon_Gyroscope_Z");
+
 // Setup Keys Names
 const FJoyConKeyNames::Type FJoyConKeyNames::JoyCon_DPad_Up("JoyCon_DPad_Up");
 const FJoyConKeyNames::Type FJoyConKeyNames::JoyCon_DPad_Left("JoyCon_DPad_Left");
@@ -78,6 +83,11 @@ const FJoyConKeyNames::Type FJoyConKeyNames::JoyCon_Right_ThumbStick_Y("JoyCon_R
 
 const FJoyConKeyNames::Type FJoyConKeyNames::JoyCon_Zr("JoyCon_Zr");
 const FJoyConKeyNames::Type FJoyConKeyNames::JoyCon_R("JoyCon_R");
+
+// Setup gyroscope Names
+const FJoyConKeyNames::Type FJoyConKeyNames::JoyCon_Gyroscope_X("JoyCon_Gyroscope_X");
+const FJoyConKeyNames::Type FJoyConKeyNames::JoyCon_Gyroscope_Y("JoyCon_Gyroscope_Y");
+const FJoyConKeyNames::Type FJoyConKeyNames::JoyCon_Gyroscope_Z("JoyCon_Gyroscope_Z");
 
 float FJoyConInput::InitialButtonRepeatDelay = 0.2f;
 float FJoyConInput::ButtonRepeatDelay = 0.1f;
@@ -149,6 +159,11 @@ void FJoyConInput::PreInit() {
 
 	EKeys::AddKey(FKeyDetails(FJoyConKey::JoyCon_Zr, LOCTEXT("JoyCon_Zr", "JoyCon ZR"), FKeyDetails::GamepadKey, "JoyCon"));
 	EKeys::AddKey(FKeyDetails(FJoyConKey::JoyCon_R, LOCTEXT("JoyCon_R", "JoyCon R"), FKeyDetails::GamepadKey, "JoyCon"));
+
+	// Gyroscope
+	EKeys::AddKey(FKeyDetails(FJoyConKey::JoyCon_Gyroscope_X, LOCTEXT("JoyCon_Gyroscope_X", "JoyCon Gyroscope X"), FKeyDetails::GamepadKey | FKeyDetails::FloatAxis | FKeyDetails::NotBlueprintBindableKey, "JoyCon"));
+	EKeys::AddKey(FKeyDetails(FJoyConKey::JoyCon_Gyroscope_Y, LOCTEXT("JoyCon_Gyroscope_Y", "JoyCon Gyroscope Y"), FKeyDetails::GamepadKey | FKeyDetails::FloatAxis | FKeyDetails::NotBlueprintBindableKey, "JoyCon"));
+	EKeys::AddKey(FKeyDetails(FJoyConKey::JoyCon_Gyroscope_Z, LOCTEXT("JoyCon_Gyroscope_Z", "JoyCon Gyroscope Z"), FKeyDetails::GamepadKey | FKeyDetails::FloatAxis | FKeyDetails::NotBlueprintBindableKey, "JoyCon"));
 
 	UE_LOG(LogTemp, Log, TEXT("JoyConInput pre-init called"));
 }
@@ -380,6 +395,7 @@ void FJoyConInput::SendControllerEvents() {
 				if (Grips[i].Mode == EGripMode::Auto) {
 					if (Grips[i].Controllers.Num() > 1) {
 						SendAnalogEvents(Controller->JoyConInformation.IsLeft, Grips[i].GripIndex, Controller->GetStick(), &Controller->ControllerState.Stick);
+						SendGyroscopeEvents(Grips[i].GripIndex, Controller->GetGyroscope(), &Controller->ControllerState.Gyroscope);
 						if (Controller->JoyConInformation.IsLeft) {
 							SendButtonEvents(bButtonPressed, CurrentTime, Grips[i].GripIndex, ButtonState.Key, &ButtonState);
 						} else {
@@ -391,12 +407,15 @@ void FJoyConInput::SendControllerEvents() {
 					}
 				} else if (Grips[i].Mode == EGripMode::Landscape) {
 					SendAnalogEvents(true, Grips[i].GripIndex, Controller->GetStick(), &Controller->ControllerState.Stick);
+					SendGyroscopeEvents(Grips[i].GripIndex, Controller->GetGyroscope(), &Controller->ControllerState.Gyroscope);
 					SendButtonEvents(bButtonPressed, CurrentTime, Grips[i].GripIndex, ButtonState.Key, &ButtonState);
 				} else if (Grips[i].Mode == EGripMode::Portrait) {
 					SendAnalogEvents(true, Grips[i].GripIndex, Controller->GetStick(), &Controller->ControllerState.Stick);
+					SendGyroscopeEvents(Grips[i].GripIndex, Controller->GetGyroscope(), &Controller->ControllerState.Gyroscope);
 					SendButtonEvents(bButtonPressed, CurrentTime, Grips[i].GripIndex, ButtonState.Key, &ButtonState);
 				} else if (Grips[i].Mode == EGripMode::GamePad) {
 					SendAnalogEvents(Controller->JoyConInformation.IsLeft, Grips[i].GripIndex, Controller->GetStick(), &Controller->ControllerState.Stick);
+					SendGyroscopeEvents(Grips[i].GripIndex, Controller->GetGyroscope(), &Controller->ControllerState.Gyroscope);
 					if (Controller->JoyConInformation.IsLeft) {
 						SendButtonEvents(bButtonPressed, CurrentTime, Grips[i].GripIndex, ButtonState.Key, &ButtonState);
 					} else {
@@ -518,5 +537,20 @@ void FJoyConInput::SendAnalogEvents(const bool bIsLeft, const int GripIndex, con
 	if (StickVector.Y != AnalogState->Y) {
 		AnalogState->Y = StickVector.Y;
 		MessageHandler->OnControllerAnalog(bIsLeft ? FJoyConKeyNames::JoyCon_Left_ThumbStick_Y : FJoyConKeyNames::JoyCon_Right_ThumbStick_Y, GripIndex, AnalogState->Y);
+	}
+}
+
+void FJoyConInput::SendGyroscopeEvents(const int GripIndex, const FVector GyroscopeVector, FJoyConGyroscopeState* GyroscopeState) const {
+	if (GyroscopeVector.X != GyroscopeState->X) {
+		GyroscopeState->X = GyroscopeVector.X;
+		MessageHandler->OnControllerAnalog(FJoyConKeyNames::JoyCon_Gyroscope_X, GripIndex, GyroscopeState->X);
+	}
+	if (GyroscopeVector.Y != GyroscopeState->Y) {
+		GyroscopeState->Y = GyroscopeVector.Y;
+		MessageHandler->OnControllerAnalog(FJoyConKeyNames::JoyCon_Gyroscope_Y, GripIndex, GyroscopeState->Y);
+	}
+	if (GyroscopeVector.Z != GyroscopeState->Z) {
+		GyroscopeState->Z = GyroscopeVector.Z;
+		MessageHandler->OnControllerAnalog(FJoyConKeyNames::JoyCon_Gyroscope_Z, GripIndex, GyroscopeState->Z);
 	}
 }

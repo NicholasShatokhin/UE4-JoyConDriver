@@ -48,7 +48,12 @@ enum EJoyConControllerButton : int {
 	Left_ThumbStick_X,
 	Left_ThumbStick_Y,
     Right_ThumbStick_X,
-    Right_ThumbStick_Y
+    Right_ThumbStick_Y,
+
+	/** Gyroscope */
+	Gyroscope_X,
+	Gyroscope_Y,
+	Gyroscope_Z
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -90,6 +95,11 @@ struct FJoyConKey {
 	static const FKey JoyCon_Left_ThumbStick_Y;
 	static const FKey JoyCon_Right_ThumbStick_X;
 	static const FKey JoyCon_Right_ThumbStick_Y;
+
+	/* Gyroscope axises */
+	static const FKey JoyCon_Gyroscope_X;
+	static const FKey JoyCon_Gyroscope_Y;
+	static const FKey JoyCon_Gyroscope_Z;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -133,6 +143,11 @@ struct FJoyConKeyNames {
 	static const FName JoyCon_Left_ThumbStick_Y;
 	static const FName JoyCon_Right_ThumbStick_X;
 	static const FName JoyCon_Right_ThumbStick_Y;
+
+	/* Gyroscope axises */
+	static const FName JoyCon_Gyroscope_X;
+	static const FName JoyCon_Gyroscope_Y;
+	static const FName JoyCon_Gyroscope_Z;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -167,6 +182,19 @@ struct FJoyConAnalogState {
 };
 
 //-------------------------------------------------------------------------------------------------
+// FJoyConGyroscopeState -  Gyroscope axis state
+//-------------------------------------------------------------------------------------------------
+
+struct FJoyConGyroscopeState {
+	float X;
+	float Y;
+	float Z;
+
+	/** Default constructor that just sets sensible defaults */
+	FJoyConGyroscopeState() : X(0.0), Y(0.0), Z(0.0) {}
+};
+
+//-------------------------------------------------------------------------------------------------
 // FJoyConControllerState
 //-------------------------------------------------------------------------------------------------
 
@@ -175,6 +203,7 @@ struct FJoyConControllerState {
 	FJoyConButtonState Buttons[static_cast<int32>(EJoyConControllerButton::TotalButtonCount)];
 	/** Analog stick state */
 	FJoyConAnalogState Stick;
+	FJoyConGyroscopeState Gyroscope;
 
 	FJoyConControllerState() {
 		for (FJoyConButtonState& Button : Buttons) {
@@ -184,6 +213,10 @@ struct FJoyConControllerState {
 
 		Stick.X = 0.0;
 		Stick.Y = 0.0;
+
+		Gyroscope.X = 0.0;
+		Gyroscope.Y = 0.0;
+		Gyroscope.Z = 0.0;
 
 		Buttons[static_cast<int32>(EJoyConControllerButton::DPad_Up)].Key = FJoyConKeyNames::JoyCon_DPad_Up;
 		Buttons[static_cast<int32>(EJoyConControllerButton::DPad_Down)].Key = FJoyConKeyNames::JoyCon_DPad_Down;
